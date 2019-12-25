@@ -4737,7 +4737,7 @@ public final class Torr {
    * Parties:
    *    Node -&gt; Hub
    * Description:
-   *   Register node presence in the system, by sending the IP, port, your name or an alias, and the order number
+   *   InitialRegister node presence in the system, by sending the IP, port, your name or an alias, and the order number
    *   (index) of your node. The index must be 0, 1, or 2.
    * Response status:
    *   - SUCCESS if all went well, even if there are no results
@@ -5057,7 +5057,7 @@ public final class Torr {
      * Parties:
      *    Node -&gt; Hub
      * Description:
-     *   Register node presence in the system, by sending the IP, port, your name or an alias, and the order number
+     *   InitialRegister node presence in the system, by sending the IP, port, your name or an alias, and the order number
      *   (index) of your node. The index must be 0, 1, or 2.
      * Response status:
      *   - SUCCESS if all went well, even if there are no results
