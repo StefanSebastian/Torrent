@@ -107,6 +107,8 @@ syntax = "proto3";
               Stopping ...
 */
 
+option java_package = "com.torrent.gen";
+
 // Common
 message NodeId {
     string host = 1; // String containing either domain name  or IP (most likely)

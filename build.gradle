@@ -10,6 +10,7 @@ buildscript {
 plugins {
     id 'java'
     id "com.google.protobuf" version "0.8.11"
+    id "idea"
 }
 
 group 'com.distributed.'
@@ -33,6 +34,12 @@ protobuf {
         // Download from repositories
         artifact = 'com.google.protobuf:protoc:3.0.0'
     }
-    
+
     generatedFilesBaseDir = "$projectDir/src"
+}
+
+idea {
+    module {
+
+    }
 }
