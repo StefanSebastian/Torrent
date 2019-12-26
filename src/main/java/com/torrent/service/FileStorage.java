@@ -66,10 +66,6 @@ public class FileStorage {
         return fileInfo;
     }
 
-    public void storeInfo(Torr.FileInfo fileInfo) {
-        files.put(fileInfo.getFilename(), fileInfo);
-    }
-
     public byte[] getFileContent(String fileName) {
         return dataStore.get(fileName);
     }
@@ -78,6 +74,9 @@ public class FileStorage {
         return dataStore.containsKey(fileName);
     }
 
+    public void storePartialChunks(String fileName, List<StoredChunkInfo> chunks) {
+        storedChunks.put(fileName, chunks);
+    }
 
     private byte[] getMd5(byte[] content) {
         try {
