@@ -4,6 +4,7 @@ import com.torrent.Config;
 import com.torrent.gen.Torr;
 import com.torrent.operations.LocalSearchService;
 import com.torrent.operations.ReplicateRequestService;
+import com.torrent.operations.SearchService;
 import com.torrent.operations.UploadRequestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,9 @@ public class Server {
 
     @Autowired
     private LocalSearchService localSearchService;
+
+    @Autowired
+    private SearchService searchService;
 
     //initialize socket and input stream
     private Socket socket = null;
@@ -103,6 +107,14 @@ public class Server {
                     .newBuilderForType()
                     .setType(Torr.Message.Type.LOCAL_SEARCH_RESPONSE)
                     .setLocalSearchResponse(response)
+                    .build();
+        }
+        if (message.getType() == Torr.Message.Type.SEARCH_REQUEST) {
+            Torr.SearchResponse response = searchService.handle(message.getSearchRequest());
+            reply = Torr.Message.getDefaultInstance()
+                    .newBuilderForType()
+                    .setType(Torr.Message.Type.SEARCH_RESPONSE)
+                    .setSearchResponse(response)
                     .build();
         }
 

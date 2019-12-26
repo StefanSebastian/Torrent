@@ -47,7 +47,6 @@ public class ReplicateRequestService {
         if (response == null || response.getStatus() != Torr.Status.SUCCESS) {
             return getResponse(Torr.Status.PROCESSING_ERROR);
         }
-        LOG.info("Performed subnet request : " + response);
 
         // TODO
         storage.storeInfo(fileInfo);
