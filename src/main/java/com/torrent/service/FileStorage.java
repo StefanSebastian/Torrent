@@ -12,7 +12,7 @@ import java.util.*;
 public class FileStorage {
 
     private Map<String, Torr.FileInfo> files = new HashMap<>();
-    //private Map<String, byte[]> dataStore = new HashMap<>();
+    private Map<String, byte[]> dataStore = new HashMap<>();
 
     public Map<String, Torr.FileInfo> getFiles() {
         return files;
@@ -27,6 +27,7 @@ public class FileStorage {
                 .addAllChunks(getChunks(data))
                 .build();
         files.put(name, fileInfo);
+        dataStore.put(name, data);
         return fileInfo;
     }
 
@@ -35,7 +36,11 @@ public class FileStorage {
     }
 
     public boolean isStored(String fileName) {
-        return files.containsKey(fileName);
+        return dataStore.containsKey(fileName);
+    }
+
+    public byte[] getFileContent(String fileName) {
+        return dataStore.get(fileName);
     }
 
     private byte[] getMd5(byte[] content) {

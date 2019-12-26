@@ -2,10 +2,7 @@ package com.torrent.service;
 
 import com.torrent.Config;
 import com.torrent.gen.Torr;
-import com.torrent.operations.LocalSearchService;
-import com.torrent.operations.ReplicateRequestService;
-import com.torrent.operations.SearchService;
-import com.torrent.operations.UploadRequestService;
+import com.torrent.operations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +37,9 @@ public class Server {
 
     @Autowired
     private SearchService searchService;
+
+    @Autowired
+    private DownloadRequestService downloadRequestService;
 
     //initialize socket and input stream
     private Socket socket = null;
@@ -115,6 +115,13 @@ public class Server {
                     .newBuilderForType()
                     .setType(Torr.Message.Type.SEARCH_RESPONSE)
                     .setSearchResponse(response)
+                    .build();
+        }
+        if (message.getType() == Torr.Message.Type.DOWNLOAD_REQUEST) {
+            Torr.DownloadResponse response = downloadRequestService.handle(message.getDownloadRequest());
+            reply = Torr.Message.newBuilder()
+                    .setType(Torr.Message.Type.DOWNLOAD_RESPONSE)
+                    .setDownloadResponse(response)
                     .build();
         }
 
