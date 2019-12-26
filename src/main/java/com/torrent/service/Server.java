@@ -70,8 +70,29 @@ public class Server {
     }
 
     protected void handleMessage(Torr.Message message) {
+        Torr.Message reply = null;
+
         if (message.getType() == Torr.Message.Type.UPLOAD_REQUEST) {
             Torr.UploadResponse response = uploadRequestService.handle(message.getUploadRequest());
+            reply = Torr.Message.getDefaultInstance()
+                    .newBuilderForType()
+                    .setType(Torr.Message.Type.UPLOAD_RESPONSE)
+                    .setUploadResponse(response)
+                    .build();
         }
+
+        try {
+            sendReply(reply);
+        } catch (IOException exc) {
+            LOG.info("Could not send reply " + exc.getMessage());
+        }
+    }
+
+    private void sendReply(Torr.Message message) throws IOException {
+        byte[] m = message.toByteArray();
+        out = new DataOutputStream(socket.getOutputStream());
+        out.writeInt(m.length);
+        out.write(m);
+        LOG.info("Sent message " + message.toString());
     }
 }

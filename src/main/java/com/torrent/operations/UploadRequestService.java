@@ -25,18 +25,19 @@ public class UploadRequestService {
 
     public Torr.UploadResponse handle(Torr.UploadRequest request) {
         if (request.getFilename() == null || request.getFilename().isEmpty()) {
-            return getResponse(Torr.Status.MESSAGE_ERROR);
+            return getResponse(Torr.Status.MESSAGE_ERROR, null);
         }
 
-        storage.store(request.getFilename(), request.getData().toByteArray());
+        Torr.FileInfo fileInfo = storage.store(request.getFilename(), request.getData().toByteArray());
 
-        return getResponse(Torr.Status.SUCCESS);
+        return getResponse(Torr.Status.SUCCESS, fileInfo);
     }
 
-    private Torr.UploadResponse getResponse(Torr.Status status) {
+    private Torr.UploadResponse getResponse(Torr.Status status, Torr.FileInfo fileInfo) {
         Torr.UploadResponse response = Torr.UploadResponse.getDefaultInstance()
                 .newBuilderForType()
                 .setStatus(status)
+                .setFileInfo(fileInfo)
                 .build();
         return response;
     }
