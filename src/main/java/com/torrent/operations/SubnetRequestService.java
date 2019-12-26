@@ -21,12 +21,11 @@ public class SubnetRequestService {
     @Autowired
     private Config config;
 
-    // TODO : refactor
-    //@EventListener(ApplicationReadyEvent.class)
-    public void test() {
+    public Torr.SubnetResponse perform(int subnetId) {
+        Torr.SubnetResponse response = null;
         try {
-            Torr.Message message = sender.sendMessage(getSubnetRequestMessage());
-            Torr.SubnetResponse response = message.getSubnetResponse();
+            Torr.Message message = sender.sendMessage(getSubnetRequestMessage(subnetId), config.getHubIp(), config.getHubPort());
+            response = message.getSubnetResponse();
             if (response.getStatus() != Torr.Status.SUCCESS) {
                 LOG.info("Status " + response.getStatus());
                 LOG.info("Error " + response.getErrorMessage());
@@ -34,12 +33,13 @@ public class SubnetRequestService {
         } catch (IOException exc) {
             LOG.info("Could not send subnet request");
         }
+        return response;
     }
 
-    private Torr.Message getSubnetRequestMessage() {
+    private Torr.Message getSubnetRequestMessage(int subnetId) {
         Torr.SubnetRequest request = Torr.SubnetRequest.getDefaultInstance()
                 .newBuilderForType()
-                .setSubnetId(1)
+                .setSubnetId(subnetId)
                 .build();
         return Torr.Message.newBuilder()
                 .setType(Torr.Message.Type.SUBNET_REQUEST)

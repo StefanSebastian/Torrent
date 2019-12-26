@@ -27,7 +27,7 @@ public class InitialRegister {
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
         try {
-            Torr.Message message = sender.sendMessage(getRegisterMessage());
+            Torr.Message message = sender.sendMessage(getRegisterMessage(), config.getHubIp(), config.getHubPort());
             Torr.RegistrationResponse response = message.getRegistrationResponse();
             if (response.getStatus() != Torr.Status.SUCCESS) {
                 LOG.info("Status for register : " + response.getStatus());

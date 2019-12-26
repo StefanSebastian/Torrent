@@ -2,6 +2,8 @@ package com.torrent.service;
 
 import com.torrent.Config;
 import com.torrent.gen.Torr;
+import com.torrent.operations.LocalSearchService;
+import com.torrent.operations.ReplicateRequestService;
 import com.torrent.operations.UploadRequestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +12,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import javax.jws.Oneway;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -27,6 +30,12 @@ public class Server {
 
     @Autowired
     private UploadRequestService uploadRequestService;
+
+    @Autowired
+    private ReplicateRequestService replicateRequestService;
+
+    @Autowired
+    private LocalSearchService localSearchService;
 
     //initialize socket and input stream
     private Socket socket = null;
@@ -69,7 +78,7 @@ public class Server {
         if (out != null) { out.close(); }
     }
 
-    protected void handleMessage(Torr.Message message) {
+    private void handleMessage(Torr.Message message) {
         Torr.Message reply = null;
 
         if (message.getType() == Torr.Message.Type.UPLOAD_REQUEST) {
@@ -78,6 +87,22 @@ public class Server {
                     .newBuilderForType()
                     .setType(Torr.Message.Type.UPLOAD_RESPONSE)
                     .setUploadResponse(response)
+                    .build();
+        }
+        if (message.getType() == Torr.Message.Type.REPLICATE_REQUEST) {
+            Torr.ReplicateResponse response = replicateRequestService.handle(message.getReplicateRequest());
+            reply = Torr.Message.getDefaultInstance()
+                    .newBuilderForType()
+                    .setType(Torr.Message.Type.REPLICATE_RESPONSE)
+                    .setReplicateResponse(response)
+                    .build();
+        }
+        if (message.getType() == Torr.Message.Type.LOCAL_SEARCH_REQUEST) {
+            Torr.LocalSearchResponse response = localSearchService.handle(message.getLocalSearchRequest());
+            reply = Torr.Message.getDefaultInstance()
+                    .newBuilderForType()
+                    .setType(Torr.Message.Type.LOCAL_SEARCH_RESPONSE)
+                    .setLocalSearchResponse(response)
                     .build();
         }
 

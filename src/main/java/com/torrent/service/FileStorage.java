@@ -12,7 +12,11 @@ import java.util.*;
 public class FileStorage {
 
     private Map<String, Torr.FileInfo> files = new HashMap<>();
-    private Map<String, byte[]> dataStore = new HashMap<>();
+    //private Map<String, byte[]> dataStore = new HashMap<>();
+
+    public Map<String, Torr.FileInfo> getFiles() {
+        return files;
+    }
 
     public Torr.FileInfo store(String name, byte[] data){
         Torr.FileInfo fileInfo = Torr.FileInfo.getDefaultInstance()
@@ -23,8 +27,15 @@ public class FileStorage {
                 .addAllChunks(getChunks(data))
                 .build();
         files.put(name, fileInfo);
-        dataStore.put(name, data);
         return fileInfo;
+    }
+
+    public void storeInfo(Torr.FileInfo fileInfo) {
+        files.put(fileInfo.getFilename(), fileInfo);
+    }
+
+    public boolean isStored(String fileName) {
+        return files.containsKey(fileName);
     }
 
     private byte[] getMd5(byte[] content) {

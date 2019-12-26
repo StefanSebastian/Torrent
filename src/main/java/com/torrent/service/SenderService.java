@@ -18,10 +18,7 @@ public class SenderService {
     private static Logger LOG = LoggerFactory
             .getLogger(SenderService.class);
 
-    @Autowired
-    private Config config;
-
-    public Torr.Message sendMessage(Torr.Message message) throws IOException {
+    public Torr.Message sendMessage(Torr.Message message, String ip, int port) throws IOException {
         byte[] m = message.toByteArray();
         int len = m.length; // 32-bit integer
 
@@ -30,7 +27,7 @@ public class SenderService {
         Socket clientSocket = null;
         Torr.Message response = null;
         try {
-            clientSocket = new Socket(config.getHubIp(), config.getHubPort());
+            clientSocket = new Socket(ip, port);
             out = new DataOutputStream(clientSocket.getOutputStream());
             out.writeInt(len);
             out.write(m);
