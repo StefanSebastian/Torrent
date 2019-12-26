@@ -151,7 +151,7 @@ public class ReplicateRequestService {
 
         // task for each chunk ; try on all nodes
         for (Torr.ChunkInfo chunkInfo : fileInfo.getChunksList()) {
-            callables.add(getRemoteChunk(subnet, chunkInfo));
+            callables.add(getRemoteChunk(subnet, chunkInfo, fileInfo));
         }
 
         try {
@@ -171,7 +171,7 @@ public class ReplicateRequestService {
     /**
      * Try to grab remote chunk
      */
-    private Callable<ChunkRequestStatus> getRemoteChunk(Torr.SubnetResponse subnet, Torr.ChunkInfo info) {
+    private Callable<ChunkRequestStatus> getRemoteChunk(Torr.SubnetResponse subnet, Torr.ChunkInfo info, Torr.FileInfo fileInfo) {
         return () -> {
             ChunkRequestStatus status = new ChunkRequestStatus();
             List<LoggedChunkResponse> loggedResponses = new LinkedList<>();
@@ -180,9 +180,12 @@ public class ReplicateRequestService {
             builder.setStatus(Torr.Status.UNABLE_TO_COMPLETE);
 
             for (Torr.NodeId nodeId : subnet.getNodesList()) {
+                if (nodeId.getOwner().equals(config.getNodeOwner()) && nodeId.getIndex() == config.getNodeIndex()) {
+                    continue; // skip auto query
+                }
                 try {
                     Torr.Message message = senderService.sendMessage(
-                            getChunkRequestMessage(info), nodeId.getHost(), nodeId.getPort());
+                            getChunkRequestMessage(info, fileInfo), nodeId.getHost(), nodeId.getPort());
                     Torr.ChunkResponse response = message.getChunkResponse();
 
                     // log resp
@@ -203,10 +206,10 @@ public class ReplicateRequestService {
         };
     }
 
-    private Torr.Message getChunkRequestMessage(Torr.ChunkInfo chunkInfo) {
+    private Torr.Message getChunkRequestMessage(Torr.ChunkInfo chunkInfo, Torr.FileInfo fileInfo) {
         Torr.ChunkRequest request = Torr.ChunkRequest.newBuilder()
                 .setChunkIndex(chunkInfo.getIndex())
-                .setFileHash(chunkInfo.getHash())
+                .setFileHash(fileInfo.getHash())
                 .build();
         return Torr.Message.newBuilder()
                 .setType(Torr.Message.Type.CHUNK_REQUEST)
