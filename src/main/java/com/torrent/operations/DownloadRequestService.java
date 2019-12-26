@@ -25,14 +25,7 @@ public class DownloadRequestService {
             return getResponse(Torr.Status.MESSAGE_ERROR);
         }
 
-        Torr.FileInfo fileInfo = null;
-        Map<String , Torr.FileInfo> files = storage.getFiles();
-        for (Torr.FileInfo file : files.values()) {
-            if (Arrays.equals(fileHash, file.getHash().toByteArray())) {
-                fileInfo = file;
-                break;
-            }
-        }
+        Torr.FileInfo fileInfo = storage.getByHash(fileHash);
         if (fileInfo == null) {
             return getResponse(Torr.Status.UNABLE_TO_COMPLETE);
         }

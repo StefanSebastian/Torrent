@@ -146,15 +146,7 @@ public class SearchService {
 
     private Callable<Torr.NodeSearchResult> getLocalSearchResult(String regex, Torr.NodeId nodeId) {
         return () -> {
-            Map<String, Torr.FileInfo> files = storage.getFiles();
-            List<Torr.FileInfo> foundFiles = new LinkedList<>();
-            Pattern pattern = Pattern.compile(regex);
-            for (String key : files.keySet()) {
-                Matcher matcher = pattern.matcher(key);
-                if (matcher.matches()) {
-                    foundFiles.add(files.get(key));
-                }
-            }
+            List<Torr.FileInfo> foundFiles = storage.getMatches(regex);
             return Torr.NodeSearchResult
                     .newBuilder()
                     .setNode(nodeId)

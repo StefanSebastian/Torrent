@@ -37,16 +37,7 @@ public class LocalSearchService {
     }
 
     private List<Torr.FileInfo> getMatches(String regex) {
-        Map<String, Torr.FileInfo> files = storage.getFiles();
-        List<Torr.FileInfo> result = new LinkedList<>();
-        Pattern pattern = Pattern.compile(regex);
-        for (String key : files.keySet()) {
-            Matcher matcher = pattern.matcher(key);
-            if (matcher.matches()) {
-                result.add(files.get(key));
-            }
-        }
-        return result;
+        return storage.getMatches(regex);
     }
 
     private Torr.LocalSearchResponse getResponse(Torr.Status status) {

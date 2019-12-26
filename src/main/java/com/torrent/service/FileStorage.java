@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class FileStorage {
@@ -14,8 +16,27 @@ public class FileStorage {
     private Map<String, Torr.FileInfo> files = new HashMap<>();
     private Map<String, byte[]> dataStore = new HashMap<>();
 
-    public Map<String, Torr.FileInfo> getFiles() {
-        return files;
+    public Torr.FileInfo getByHash(byte[] fileHash) {
+        Torr.FileInfo fileInfo = null;
+        for (Torr.FileInfo file : files.values()) {
+            if (Arrays.equals(fileHash, file.getHash().toByteArray())) {
+                fileInfo = file;
+                break;
+            }
+        }
+        return fileInfo;
+    }
+
+    public List<Torr.FileInfo> getMatches(String regex) {
+        List<Torr.FileInfo> result = new LinkedList<>();
+        Pattern pattern = Pattern.compile(regex);
+        for (String key : files.keySet()) {
+            Matcher matcher = pattern.matcher(key);
+            if (matcher.matches()) {
+                result.add(files.get(key));
+            }
+        }
+        return result;
     }
 
     public Torr.FileInfo store(String name, byte[] data){
@@ -31,6 +52,10 @@ public class FileStorage {
         return fileInfo;
     }
 
+    public byte[] getFileContent(String fileName) {
+        return dataStore.get(fileName);
+    }
+
     public void storeInfo(Torr.FileInfo fileInfo) {
         files.put(fileInfo.getFilename(), fileInfo);
     }
@@ -39,9 +64,6 @@ public class FileStorage {
         return dataStore.containsKey(fileName);
     }
 
-    public byte[] getFileContent(String fileName) {
-        return dataStore.get(fileName);
-    }
 
     private byte[] getMd5(byte[] content) {
         try {
