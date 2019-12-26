@@ -1,5 +1,6 @@
 package com.torrent.service;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.torrent.Config;
 import com.torrent.gen.Torr;
 import com.torrent.operations.*;
@@ -10,12 +11,14 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import javax.jws.Oneway;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 public class Server {
@@ -45,10 +48,9 @@ public class Server {
     private ChunkRequestService chunkRequestService;
 
     //initialize socket and input stream
-    private Socket socket = null;
     private ServerSocket server = null;
-    private DataInputStream in = null;
-    private DataOutputStream out = null;
+
+    private ExecutorService executorService = Executors.newCachedThreadPool();
 
     @EventListener(ApplicationReadyEvent.class)
     public void start() throws IOException {
@@ -57,9 +59,27 @@ public class Server {
             LOG.info("Server started ...");
 
             while (true) {
-                socket = server.accept();
+                Socket socket = server.accept();
                 LOG.info("Client accepted");
 
+                // start new task
+                executorService.submit(getClientExecutor(socket));
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+
+            if (server != null) { server.close(); }
+        }
+    }
+
+    private Callable<Boolean> getClientExecutor(Socket socket) {
+        return () -> {
+            DataInputStream in = null;
+            DataOutputStream out = null;
+
+            try {
                 in = new DataInputStream(socket.getInputStream());
                 int length = in.readInt();
                 byte[] mb = new byte[length];
@@ -67,25 +87,21 @@ public class Server {
                 Torr.Message request = Torr.Message.parseFrom(mb);
                 LOG.info("Received message " + request.toString());
 
-                handleMessage(request);
-
-                closeResources();
+                handleMessage(request, out, socket);
+                return true;
+            } catch (IOException exc) {
+                LOG.info("Could not read message");
+                return false;
+            } finally {
+                if (in != null) { in.close(); }
+                if (out != null) { out.close(); }
+                if (socket != null) { socket.close(); }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            closeResources();
-            if (server != null) { server.close(); }
-        }
+        };
     }
 
-    private void closeResources() throws IOException {
-        if (socket != null) { socket.close(); }
-        if (in != null) { in.close(); }
-        if (out != null) { out.close(); }
-    }
 
-    private void handleMessage(Torr.Message message) {
+    private void handleMessage(Torr.Message message, DataOutputStream out, Socket socket) {
         Torr.Message reply = null;
 
         if (message.getType() == Torr.Message.Type.UPLOAD_REQUEST) {
@@ -136,13 +152,13 @@ public class Server {
         }
 
         try {
-            sendReply(reply);
+            sendReply(reply, out, socket);
         } catch (IOException exc) {
             LOG.info("Could not send reply " + exc.getMessage());
         }
     }
 
-    private void sendReply(Torr.Message message) throws IOException {
+    private void sendReply(Torr.Message message, DataOutputStream out, Socket socket) throws IOException {
         byte[] m = message.toByteArray();
         out = new DataOutputStream(socket.getOutputStream());
         out.writeInt(m.length);

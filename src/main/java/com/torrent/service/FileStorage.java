@@ -17,7 +17,7 @@ public class FileStorage {
     private Map<String, byte[]> dataStore = new HashMap<>();
     private Map<String, List<StoredChunkInfo>> storedChunks = new HashMap<>();
 
-    public Torr.FileInfo getByHash(byte[] fileHash) {
+    public synchronized Torr.FileInfo getByHash(byte[] fileHash) {
         Torr.FileInfo fileInfo = null;
         for (Torr.FileInfo file : files.values()) {
             if (Arrays.equals(fileHash, file.getHash().toByteArray())) {
@@ -28,7 +28,7 @@ public class FileStorage {
         return fileInfo;
     }
 
-    public byte[] getChunkByIndex(String fileName, int index) {
+    public synchronized byte[] getChunkByIndex(String fileName, int index) {
         List<StoredChunkInfo> storedChunkInfos = storedChunks.get(fileName);
         if (storedChunkInfos == null) {
             return null;
@@ -41,7 +41,7 @@ public class FileStorage {
         return null;
     }
 
-    public List<Torr.FileInfo> getMatches(String regex) {
+    public synchronized List<Torr.FileInfo> getMatches(String regex) {
         List<Torr.FileInfo> result = new LinkedList<>();
         Pattern pattern = Pattern.compile(regex);
         for (String key : files.keySet()) {
@@ -53,7 +53,7 @@ public class FileStorage {
         return result;
     }
 
-    public Torr.FileInfo store(String name, byte[] data){
+    public synchronized Torr.FileInfo store(String name, byte[] data){
         Torr.FileInfo fileInfo = Torr.FileInfo.getDefaultInstance()
                 .newBuilderForType()
                 .setFilename(name)
@@ -66,15 +66,15 @@ public class FileStorage {
         return fileInfo;
     }
 
-    public byte[] getFileContent(String fileName) {
+    public synchronized byte[] getFileContent(String fileName) {
         return dataStore.get(fileName);
     }
 
-    public boolean isStored(String fileName) {
+    public synchronized boolean isStored(String fileName) {
         return dataStore.containsKey(fileName);
     }
 
-    public void storePartialChunks(String fileName, List<StoredChunkInfo> chunks) {
+    public synchronized void storePartialChunks(String fileName, List<StoredChunkInfo> chunks) {
         storedChunks.put(fileName, chunks);
     }
 
