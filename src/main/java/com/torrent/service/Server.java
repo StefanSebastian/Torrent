@@ -41,6 +41,9 @@ public class Server {
     @Autowired
     private DownloadRequestService downloadRequestService;
 
+    @Autowired
+    private ChunkRequestService chunkRequestService;
+
     //initialize socket and input stream
     private Socket socket = null;
     private ServerSocket server = null;
@@ -122,6 +125,13 @@ public class Server {
             reply = Torr.Message.newBuilder()
                     .setType(Torr.Message.Type.DOWNLOAD_RESPONSE)
                     .setDownloadResponse(response)
+                    .build();
+        }
+        if (message.getType() == Torr.Message.Type.CHUNK_REQUEST) {
+            Torr.ChunkResponse response = chunkRequestService.handle(message.getChunkRequest());
+            reply = Torr.Message.newBuilder()
+                    .setType(Torr.Message.Type.CHUNK_RESPONSE)
+                    .setChunkResponse(response)
                     .build();
         }
 

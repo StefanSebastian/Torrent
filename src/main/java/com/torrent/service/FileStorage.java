@@ -15,6 +15,7 @@ public class FileStorage {
 
     private Map<String, Torr.FileInfo> files = new HashMap<>();
     private Map<String, byte[]> dataStore = new HashMap<>();
+    private Map<String, List<StoredChunkInfo>> storedChunks = new HashMap<>();
 
     public Torr.FileInfo getByHash(byte[] fileHash) {
         Torr.FileInfo fileInfo = null;
@@ -25,6 +26,19 @@ public class FileStorage {
             }
         }
         return fileInfo;
+    }
+
+    public byte[] getChunkByIndex(String fileName, int index) {
+        List<StoredChunkInfo> storedChunkInfos = storedChunks.get(fileName);
+        if (storedChunkInfos == null) {
+            return null;
+        }
+        for (StoredChunkInfo info : storedChunkInfos) {
+            if (info.getChunkInfo().getIndex() == index) {
+                return info.getChunkData();
+            }
+        }
+        return null;
     }
 
     public List<Torr.FileInfo> getMatches(String regex) {
@@ -45,19 +59,19 @@ public class FileStorage {
                 .setFilename(name)
                 .setHash(getConvertedMd5(data))
                 .setSize(data.length)
-                .addAllChunks(getChunks(data))
+                .addAllChunks(getChunks(name, data))
                 .build();
         files.put(name, fileInfo);
         dataStore.put(name, data);
         return fileInfo;
     }
 
-    public byte[] getFileContent(String fileName) {
-        return dataStore.get(fileName);
-    }
-
     public void storeInfo(Torr.FileInfo fileInfo) {
         files.put(fileInfo.getFilename(), fileInfo);
+    }
+
+    public byte[] getFileContent(String fileName) {
+        return dataStore.get(fileName);
     }
 
     public boolean isStored(String fileName) {
@@ -83,8 +97,12 @@ public class FileStorage {
         return ByteString.copyFrom(md5);
     }
 
-    private List<Torr.ChunkInfo> getChunks(byte[] data) {
+    /**
+     * Breaks down data into chunks and stores them
+     */
+    private List<Torr.ChunkInfo> getChunks(String name, byte[] data) {
         List<Torr.ChunkInfo> chunks = new LinkedList<>();
+        List<StoredChunkInfo> chunksToStore = new LinkedList<>();
 
         int index = 0;
         int size = 1024;
@@ -102,8 +120,10 @@ public class FileStorage {
                     .build();
             chunks.add(chunkInfo);
             index += 1;
-        }
 
+            chunksToStore.add(new StoredChunkInfo(chunkInfo, subarr));
+        }
+        storedChunks.put(name, chunksToStore);
         return chunks;
     }
 }
