@@ -11,11 +11,10 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.concurrent.*;
 
 @Component
@@ -74,31 +73,32 @@ public class Server {
     private Callable<Boolean> getClientExecutor(Socket socket) {
         return () -> {
             DataInputStream in = null;
-            DataOutputStream out = null;
+            BufferedInputStream inBuffered = null;
 
             try {
-                in = new DataInputStream(socket.getInputStream());
+                inBuffered = new BufferedInputStream(socket.getInputStream());
+                in = new DataInputStream(inBuffered);
                 int length = in.readInt();
                 byte[] mb = new byte[length];
                 in.readFully(mb, 0, mb.length); // read the message
+
                 Torr.Message request = Torr.Message.parseFrom(mb);
                 LOG.info("Received message " + request.toString());
 
-                handleMessage(request, out, socket);
+                handleMessage(request, socket);
                 return true;
             } catch (IOException exc) {
                 LOG.info("Could not read message");
                 return false;
             } finally {
+                if (inBuffered != null) { inBuffered.close(); }
                 if (in != null) { in.close(); }
-                if (out != null) { out.close(); }
                 if (socket != null) { socket.close(); }
             }
         };
     }
 
-
-    private void handleMessage(Torr.Message message, DataOutputStream out, Socket socket) {
+    private void handleMessage(Torr.Message message, Socket socket) {
         Torr.Message reply = null;
 
         if (message.getType() == Torr.Message.Type.UPLOAD_REQUEST) {
@@ -149,17 +149,26 @@ public class Server {
         }
 
         try {
-            sendReply(reply, out, socket);
+            sendReply(reply, socket);
         } catch (IOException exc) {
             LOG.info("Could not send reply " + exc.getMessage());
         }
     }
 
-    private void sendReply(Torr.Message message, DataOutputStream out, Socket socket) throws IOException {
-        byte[] m = message.toByteArray();
-        out = new DataOutputStream(socket.getOutputStream());
-        out.writeInt(m.length);
-        out.write(m);
-        LOG.info("Sent message " + message.toString());
+    private void sendReply(Torr.Message message, Socket socket) throws IOException {
+        DataOutputStream out = null;
+        BufferedOutputStream outBuffered = null;
+        try {
+            byte[] m = message.toByteArray();
+            outBuffered = new BufferedOutputStream(socket.getOutputStream());
+            out = new DataOutputStream(outBuffered);
+            out.writeInt(m.length);
+            out.write(m);
+            out.flush();
+            LOG.info("Sent message " + message.toString());
+        } finally {
+            if (out != null) { out.close(); }
+            if (outBuffered != null) {outBuffered.close();}
+        }
     }
 }
